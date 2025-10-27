@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-personalization-config
+  namespace: ai
+data:
+  SERVICE_NAME: "ai-personalization"
+  QDRANT_URL: "http://qdrant.infra.svc.cluster.local:6333"

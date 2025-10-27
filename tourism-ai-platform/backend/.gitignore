@@ -1,0 +1,19 @@
+# Node.js
+dist/
+node_modules/
+
+# Testing
+coverage/
+test-results/
+
+# TypeScript
+*.tsbuildinfo
+
+# Uploads
+uploads/
+
+# OS-specific
+.DS_Store
+
+# Temporary
+tmp/

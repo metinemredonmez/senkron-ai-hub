@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-personalization
+  namespace: ai
+  labels:
+    app: ai-personalization
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-personalization
+  template:
+    metadata:
+      labels:
+        app: ai-personalization
+    spec:
+      containers:
+        - name: ai-personalization
+          image: ghcr.io/health-tourism/ai-personalization:v2.0.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: ai-personalization-config
+            - secretRef:
+                name: ai-personalization-secrets
+          ports:
+            - containerPort: 8500
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8500
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8500
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 400m
+              memory: 512Mi

@@ -1,0 +1,129 @@
+## 🧠 Health Tourism AI Platform — Doktor365 Entegrasyon Akışı
+
+### 🧩 Genel Mimari Akış
+
+```
+[Frontend / Mobile Dashboard]
+        │
+        ▼
+[NestJS Backend]  ↔↔  [Doktor365 API]
+        │                   ↑
+        ▼                   │
+[AI Orchestrator (LangGraph FSM)] ↔↔ [Redis / Kafka / Qdrant / MinIO]
+```
+
+---
+
+### 1️⃣ Frontend & Mobile Katmanı
+
+* **Kullanıcı arayüzü** (Next.js web dashboard ve React Native mobil uygulama).
+* **Amacı:** Hasta kayıtları, seyahat, uçuş ve klinik işlemleri görselleştirmek.
+* **Bağlantı:** Tüm API çağrılarını `NestJS Backend` üzerinden gerçekleştirir.
+
+  * `/api/cases`
+  * `/api/external/d365/*`
+  * `/api/ai/start-case`
+* **Dashboard rolü:**
+
+  * Sağlık turizmine özel metrikleri, doktor atamalarını, uçuş detaylarını ve finansal süreçleri tek panelde sunar.
+  * Backend’ten gelen Doktor365 + Orchestrator verilerini birleştirerek gösterir.
+
+---
+
+### 2️⃣ Backend (NestJS Integration Layer)
+
+* **Sistemin kalbi ve gateway katmanı.**
+* Dış sistemlerle (Doktor365, Amadeus, Stripe/İyzico, WhatsApp) entegre olur.
+* **Redis + Kafka** kullanarak:
+
+  * Token cache (`d365:token:{tenant}`)
+  * Idempotency key (`idem:{hash}`)
+  * Rate limit & RBAC (tenant ve user bazlı koruma)
+* **Doktor365 Proxy Uçları:**
+
+  * `/api/external/d365/deals/:id`
+  * `/api/external/d365/deals/:id/notes`
+  * `/api/external/d365/ai/send-flight-data`
+  * `/api/ai/start-case`, `/api/ai/state/:caseId`, `/api/ai/resume-case`
+* **Rolü:** API Gateway gibi davranır; tüm istekleri kimlik, tenant ve token katmanlarından geçirir.
+
+---
+
+### 3️⃣ AI Orchestrator (FastAPI / LangGraph FSM)
+
+* **AI karar motoru** (intake → eligibility → travel → approval → itinerary → aftercare).
+* Doktor365 entegrasyonu burada şu modülde yapılır:
+
+  * `tools/d365.py` → `get_deal`, `add_note`, `send_flight_data` metodları.
+* FSM içinde her adımda bu fonksiyonlar çağrılır ve Redis’te `lg:ckpt:{caseId}` checkpoint kaydı tutulur.
+* **Kafka eventleri:**
+
+  * `case.created`, `approval.required`, `travel.offer.generated`, `payment.succeeded`, `doc.uploaded`
+* **Amaç:** Tıbbi ve operasyonel karar zincirlerini otonom yönetmek.
+
+---
+
+### 4️⃣ Doktor365 API (Harici CRM)
+
+* **Roller:** Hasta / deal / appointment / uçuş bilgilerini yönetir.
+* **Başlıca Uçlar:**
+
+  * `/patient/deals` → Deal detayları
+  * `/patient/deals/note` → Hasta notları
+  * `/patient/ai/send-flight-data` → Uçuş bilgileri gönderimi
+* **Token:** `OAuth2` tabanlı, backend Redis cache (→ `d365:token:{tenant}`) ile yönetilir.
+
+---
+
+### 5️⃣ Dashboard (Senin Özel Görünüm Katmanı)
+
+* **Hem web hem mobil versiyonu vardır.**
+* **Veri kaynağı:** Sadece senin backend (NestJS).
+* **Gösterilenler:**
+
+  * Hasta durumları, AI karar aşamaları, operasyon planları, faturalama durumu, ve metrikler.
+  * D365 üzerinden gelen datalar backend Redis veya DB'den çekilir.
+
+---
+
+### 🔄 Veri Akışı Örneği (Uçuş Onay Senaryosu)
+
+1. **Frontend** → `POST /api/ai/start-case`
+2. **Backend** → `case.created` event → Kafka
+3. **Orchestrator FSM** → `travel` node → `send_flight_data()`
+4. **tools/d365.py** → Doktor365 `/patient/ai/send-flight-data`
+5. **Doktor365** → webhook (ör. `/webhooks/d365`)
+6. **Backend** → Redis + PostgreSQL güncellemesi
+7. **Dashboard** → `/api/cases/:id` endpoint ile yeni state'i gösterir.
+
+---
+
+### 📊 Katman Bazlı Özet
+
+| Katman                     | Amaç            | Doktor365 ile İlişkisi             |
+| -------------------------- | --------------- | ---------------------------------- |
+| **Frontend / Mobile**      | Dashboard & UI  | API çağrılarını backend'e yollar   |
+| **Backend (NestJS)**       | Proxy + Gateway | Token cache + API proxy            |
+| **Orchestrator (FastAPI)** | AI FSM          | D365 tool entegrasyonu             |
+| **Doktor365**              | CRM             | Hasta / uçuş / operasyon verileri  |
+| **Dashboard (Senin)**      | Görsel katman   | Backend'den gelen birleşik datalar |
+
+---
+
+### 🔐 Entegrasyonun Avantajları
+
+* KVKK / GDPR uyumlu, token cache’li, idempotent mimari.
+* AI motoru (LangGraph FSM) ile otonom operasyon akışları.
+* Tüm izleme Prometheus + Grafana + Loki + Tempo ile merkezi.
+* D365 API’leri sadece backend tarafından çağrıldığı için güvenli iletişim.
+
+---
+
+### 🌐 Özetle
+
+Bu sistemde **Doktor365 entegrasyonu** klasik anlamda bir “API Gateway” değil,
+amaca yönelik bir **Integration Layer + AI Orchestrator FSM** yapısıdır.
+
+* **NestJS Backend**: Doktor365 ile tüm dış API iletişimini ve token yönetimini yapar.
+* **Orchestrator FSM**: AI ajanların tıbbi / operasyonel kararlarını otomatize eder.
+* **Dashboard**: Tüm veri ve metrikleri merkezi olarak sunar.

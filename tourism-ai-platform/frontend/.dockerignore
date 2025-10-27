@@ -1,0 +1,10 @@
+.next/
+out/
+build/
+dist/
+node_modules/
+coverage/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store

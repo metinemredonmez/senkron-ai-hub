@@ -1,0 +1,11 @@
+groups:
+  - name: health_tourism_alerts
+    rules:
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx error rate detected"
+          description: "More than 5% of API requests are failing with 5xx errors."

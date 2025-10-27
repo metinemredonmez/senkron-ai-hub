@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "node",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@backend/*": ["backend/src/*"],
+      "@frontend/*": ["frontend/*"],
+      "@mobile/*": ["mobile/*"],
+      "@ai/*": ["ai-services/*"]
+    },
+    "outDir": "dist",
+    "incremental": true,
+    "types": ["node"]
+  },
+  "include": [
+    "backend/src/**/*",
+    "frontend/**/*",
+    "mobile/**/*",
+    "shared/**/*",
+    "ai-services/**/*",
+    "types.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
+}

@@ -1,0 +1,162 @@
+1) Roller: Kim ne yapıyor?
+
+Frontend / Mobile (Next.js, RN)
+	•	Kullanıcı arayüzü. Dashboard, formlar, onaylar, anlık bildirimler.
+	•	Backend’e /api/* çağrıları atar, Socket/WS ile canlı olayları dinler.
+
+Synchron Backend (NestJS – Gateway / Köprü)
+	•	Hub-Core: tenant context + event bus + metrics.
+	•	External: OnlyChannel, Doktor365, Travel/Payments proxy modülleri.
+	•	Agents köprüsü: (preop/postop/security) trafiği Hub’a yayınlar.
+	•	Güvenlik: JWT/RBAC, X-Tenant, X-Idempotency-Key, imza doğrulama.
+
+AI Orchestrator (FastAPI + LangGraph)
+	•	FSM: intake → eligibility → provider_match → pricing → travel → docs_visa → approvals → itinerary → aftercare.
+	•	Ajanlar arası akışı ve araç çağrılarını (tools) yönetir.
+	•	Redis’e tenant-ön ekli checkpoint yazar:
+{tenant}:lg:ckpt:{caseId}, {tenant}:case:state:{caseId}
+
+Dış Sistemler
+	•	OnlyChannel: WhatsApp/IG/Messenger webhook & mesaj gönderimi.
+	•	Doktor365: Hasta, deal, randevu, uçuş veri eşleştirmeleri.
+	•	Travel: Amadeus/Skyscanner (uçuş/otel arama & fiyat).
+	•	Payments: Stripe/İyzico (hosted checkout + webhook).
+
+Gözlemlenebilirlik
+	•	Prometheus /metrics + /hub/metrics, Tempo (otelp), Loki logları, Grafana panelleri (tenant filtresiyle).
+
+⸻
+
+2) Inbound (Gelen) akışlar: “Köprü” nasıl karşılar?
+
+2.1 OnlyChannel → Backend (Webhook)
+	1.	OnlyChannel webhook: POST /webhooks/only-channel
+	•	X-Hub-Signature-256 doğrulanır (HMAC-SHA256).
+	•	RateLimit atlanır (@SkipRateLimit), idempotency kontrolü yapılır.
+	2.	CommsService:
+	•	Mesajı CommunicationLog’a yazar (PII redacted).
+	•	StateStore (Redis): conv:state:{caseId}, conv:history:{caseId} günceller.
+	•	NLU → intent tespit eder (örn. appointment.book, documents.missing).
+	3.	HubEventPublisher:
+	•	Kafka konularına yayın: tenant.{id}.hub.events, comms.message.received.
+	4.	AI Orchestrator:
+	•	FSM’de uygun agent tool çalışır (örn. appointmentsTool.book, docsTool.missingDocs, paymentsTool.createLink).
+	•	Geri dönüş → Hub’a/Comms’a → OnlyChannel send (/messages).
+
+Başlıca anahtarlar / başlıklar
+	•	Header: X-Tenant, X-Idempotency-Key
+	•	Redis: conv:state:{caseId}, conv:history:{caseId}, idem:{sha256}
+
+2.2 Frontend → Backend (UI Eylemleri)
+	•	Örn. /api/ai-bridge/start-case → FSM başlatır
+	•	/api/cases/:id/approvals/:taskId → onay çözer
+	•	/api/travel/* → uçuş/otel önerisi
+	•	/api/payments/* → checkout linki, durum
+	•	Tümü TenantContextInterceptor ile X-Tenant’ı bağlama taşır, Hub ve Orchestrator’a tenant ile gider.
+
+⸻
+
+3) Outbound (Giden) akışlar: “Köprü” dış sistemlere ne yapar?
+
+3.1 Doktor365 (CRM)
+	•	Token cache (Redis): d365:token:{tenant}, gerekirse refresh_token (d365:refresh_token:{tenant}).
+	•	Proxy uçları:
+	•	/external/doktor365/providers, /patients/:id
+	•	/patients/sync, /appointments (Swagger örnekleriyle)
+	•	FSM Tools (Python tools/d365.py):
+	•	get_deal, add_note, send_flight_data
+	•	Webhook (D365): POST /webhooks/doktor365
+	•	DOKTOR365_SECRET ile HMAC doğrulama
+	•	Olay → Hub → Dashboard günceller
+
+3.2 OnlyChannel (Chat365)
+	•	Account Token (ak_…) → tenant için 55 dk TTL cache:
+{tenant}:onlychannel:token
+	•	Uçlar:
+	•	GET /api/account/access-token (proxy)
+	•	GET /api/conversations, POST /api/messages
+	•	Komut: CommsService.sendTemplateMessage() → WhatsApp “template” gönderir
+
+3.3 Travel / Payments
+	•	Amadeus/Skyscanner adapterları:
+	•	amadeus:token (55 dk), skyscanner:token cache
+	•	/api/travel/suggestions, /api/travel/book
+	•	Stripe/İyzico Webhook: /webhooks/payments
+	•	İmza doğrulama → payment.succeeded → FSM / Booking güncelle
+
+⸻
+
+4) AI Ajanları: Ne yapıyor, nasıl tetikleniyor?
+
+Ajan aileleri (NestJS “external/agents” + Python FSM):
+	•	preop-agent: operasyon öncesi veri derleme / uygunluk
+	•	postop-agent: iyileşme takibi / hatırlatmalar
+	•	security-agent: KVKK/GDPR guardrails / güvenlik
+	•	(Genişletilebilir: booking, concierge, medical vb.)
+
+Tetikleme yolları:
+	•	OnlyChannel’dan gelen mesaj → NLU niyetine göre (örn. appointment.book) → AppointmentsTool
+	•	Frontend’den manuel komut → /hub/events (agent-run)
+	•	Zamanlayıcı: ReminderWorker (BullMQ) → 24 saat kala randevu hatırlat
+
+Araçlar (Tools) – backend tarafında ajanlara hizmet eden adaptörler:
+	•	AppointmentsTool (Doctor365 createAppointment/listSlots),
+	•	DocsTool (Docs/Visa presign/missingDocs),
+	•	PaymentsTool (link/status),
+	•	TravelTool (flightSuggest).
+
+Geri dönüş:
+	•	Ajan → HubEventPublisher → Kafka: comms.message.sent, conversation.intent.detected
+	•	Comms → OnlyChannel send (kullanıcıya otomatik cevap)
+	•	Dashboard → olayları Socket/WS ile canlı görür
+
+⸻
+
+5) Kontratlar & Kurallar (çok önemli)
+
+Headers
+	•	X-Tenant (zorunlu; TenantContextInterceptor okur)
+	•	X-Idempotency-Key (POST/PATCH zorunlu; idem:{sha256} ile SETNX)
+	•	Authorization: Bearer … (JWT veya OnlyChannel ak_ token)
+
+Redis Key Pattern (multi-tenant)
+	•	{tenant}:onlychannel:token
+	•	{tenant}:doktor365:…
+	•	{tenant}:cases:fsm:{caseId}
+	•	conv:state:{caseId}, conv:history:{caseId} (konuşma)
+	•	idem:{sha256(key)} (idempotency)
+
+Kafka Topic Pattern
+	•	tenant.{id}.hub.events
+	•	tenant.{id}.ai.agent.events
+	•	comms.message.received / comms.message.sent
+	•	payment.succeeded, travel.offer.generated
+
+Swagger & Güvenlik
+	•	Tüm proxy uçları Swagger’da @ApiBody/@ApiResponse örnekleriyle dokümante.
+	•	Webhook’larda imza doğrulaması zorunlu (OnlyChannel/D365/Stripe başlıkları).
+
+⸻
+
+6) Örnek “Uçuş Onayı” uçtan uca senaryo
+	1.	Kullanıcı WhatsApp: “uçuş opsiyonları?” → OnlyChannel → Webhook
+	2.	Backend: signature OK → NLU → intent=travel.suggest
+	3.	TravelTool.flightSuggest → Amadeus → travel.offer.generated
+	4.	Ajan → CommsService.sendTemplateMessage → OnlyChannel “template”
+	5.	Dashboard canlıda günceller (Socket/WS), /hub/metrics artar
+	6.	Gerekirse Doktor365 “send-flight-data” ile deal’e işler
+
+⸻
+
+7) Şu anki durum için hızlı kontrol listesi
+	•	.env.local / .env.prod: DOKTOR365_*, ONLYCHANNEL_*, PROMETHEUS_PUSHGATEWAY_URL, TEMPO_ENDPOINT, HUB_REGISTRY_URL dolu
+	•	Swagger: /api/docs + /api/docs-json (örnekler boş değil)
+	•	Prometheus: /hub/metrics scrape → Grafana’da tenant_id filtresi çalışıyor
+	•	Tempo: span’larda tenant_id tag’i var
+	•	Redis: {tenant}:lg:ckpt:* anahtarları görülüyor
+	•	Kafka: tenant.{id}.hub.events ve comms.message.sent akıyor
+
+    Kısacası
+	•	Evet, sen OnlyChannel’dan alıyor, Doktor365’e yazıyor ve travel/payment gibi 3. parti API’lerle konuşuyorsun.
+	•	Backend’teki köprü (Hub-Core + External modüller) tüm bu trafiği tenant-bilinçli yönetiyor.
+	•	AI ajanları bu orkestrasyonun “akıllı” kısmı: niyet tespiti, planlama, otomatik aksiyon ve geri bildirim.

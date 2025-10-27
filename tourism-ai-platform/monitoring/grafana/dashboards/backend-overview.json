@@ -1,0 +1,64 @@
+{
+  "title": "Backend Overview",
+  "uid": "backend-overview",
+  "version": 1,
+  "schemaVersion": 38,
+  "description": "Backend metrics with tenant filtering.",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "tenant_id",
+        "type": "query",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "sort": 1,
+        "definition": "label_values(hub_tenant_request_total, tenant_id)",
+        "query": "label_values(hub_tenant_request_total, tenant_id)",
+        "regex": "",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PROMETHEUS_DS"
+        },
+        "current": {
+          "text": "All",
+          "value": ".*",
+          "selected": false
+        },
+        "hide": 0,
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Hub Requests per Tenant",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "sum by (tenant_id) (increase(hub_tenant_request_total{tenant_id=~\"$tenant_id\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "requests"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+# Node/TypeScript (shared tooling)
+node_modules/
+dist/
+coverage/
+test-results/
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+ENV/
+.venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# ML models
+models/*.pkl
+models/*.h5
+models/*.pt
+models/*.pth
+
+# Data directories
+data/raw/
+data/processed/
+
+# Vector DBs
+*.faiss
+chroma/
+qdrant/
+
+# Secrets
+secrets/
+credentials/
+*_key.txt

@@ -1,0 +1,466 @@
+#x-common-env: &default-env
+#  env_file:
+#    - ../../.env.${NODE_ENV:-local}
+#
+#x-service-defaults: &service-defaults
+#  <<: *default-env
+#  restart: unless-stopped
+#  networks:
+#    - tourism
+#
+#services:
+#  postgres:
+#    <<: *service-defaults
+#    image: postgres:15-alpine
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-postgres
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - pg_data:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_user}"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#
+#  postgres-exporter:
+#    <<: *service-defaults
+#    image: prometheuscommunity/postgres-exporter:v0.15.0
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-postgres-exporter
+#    environment:
+#      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-ai_user}:${POSTGRES_PASSWORD:-ai_password}@postgres:5432/${POSTGRES_DB:-ai_db}?sslmode=disable
+#    ports:
+#      - "9187:9187"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9187/metrics"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 5
+#
+#  redis:
+#    <<: *service-defaults
+#    image: redis:7-alpine
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-redis
+#    ports:
+#      - "6379:6379"
+#    volumes:
+#      - redis_data:/data
+#    healthcheck:
+#      test: ["CMD", "redis-cli", "ping"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#
+#  redis-exporter:
+#    <<: *service-defaults
+#    image: oliver006/redis_exporter:v1.55.0
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-redis-exporter
+#    environment:
+#      REDIS_ADDR: redis://redis:6379
+#    ports:
+#      - "9121:9121"
+#    depends_on:
+#      redis:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9121/metrics"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 5
+#
+#  zookeeper:
+#    <<: *service-defaults
+#    image: confluentinc/cp-zookeeper:7.5.0
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-zookeeper
+#    ports:
+#      - "2181:2181"
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    healthcheck:
+#      test:
+#        ["CMD", "bash", "-c", "echo ls / | zookeeper-shell localhost:2181 >/tmp/zk_health 2>&1 && ! grep -q 'Exception' /tmp/zk_health"]
+#      interval: 15s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 20s
+#
+#  kafka:
+#    <<: *service-defaults
+#    image: confluentinc/cp-kafka:7.5.0
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-kafka
+#    ports:
+#      - "9092:9092"
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+#      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#    depends_on:
+#      zookeeper:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+#      interval: 20s
+#      timeout: 10s
+#      retries: 6
+#      start_period: 20s
+#
+#  qdrant:
+#    <<: *service-defaults
+#    image: qdrant/qdrant:v1.11.2
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-qdrant
+#    ports:
+#      - "6333:6333"
+#      - "6334:6334"
+#    volumes:
+#      - qdrant_data:/qdrant/storage
+#    healthcheck:
+#      test: ["CMD-SHELL", "test -f /qdrant/storage/raft_state.json"]
+#      interval: 15s
+#      timeout: 5s
+#      retries: 5
+#
+#  minio:
+#    <<: *service-defaults
+#    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-minio
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#    volumes:
+#      - minio_data:/data
+#    command: server /data --console-address :9001
+#    healthcheck:
+#      test: ["CMD-SHELL", "sh -c 'exec 3<>/dev/tcp/127.0.0.1/9000 && exec 3>&- && exec 3<&-'"]
+#      interval: 15s
+#      timeout: 5s
+#      retries: 5
+#
+#  backend:
+#    <<: *service-defaults
+#    build:
+#      context: ../../backend
+#      dockerfile: Dockerfile
+#      target: ${BACKEND_BUILD_TARGET:-development}
+#      args:
+#        NODE_ENV: ${NODE_ENV:-local}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-backend
+#    working_dir: /workspace/backend
+#    ports:
+#      - "4002:4000"
+#    volumes:
+#      - ../../backend:/workspace/backend
+#      - backend_node_modules:/workspace/backend/node_modules
+#    environment:
+#      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+#      KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:9092}
+#      AI_ORCHESTRATOR_URL: ${AI_ORCHESTRATOR_URL:-http://orchestrator-svc:8080}
+#      AI_ORCHESTRATOR_TIMEOUT: ${AI_ORCHESTRATOR_TIMEOUT:-15000}
+#      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+#      S3_REGION: ${S3_REGION:-us-east-1}
+#      S3_BUCKET: ${S3_BUCKET:-health-tourism-docs}
+#      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+#      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+#      PROMETHEUS_PUSHGATEWAY_URL: ${PROMETHEUS_PUSHGATEWAY_URL:-http://prometheus:9091}
+#      TEMPO_ENDPOINT: ${TEMPO_ENDPOINT:-http://tempo:4318}
+#    command: >-
+#      sh -c "yarn install --frozen-lockfile && if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then yarn start:prod; else yarn start:dev; fi"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#      qdrant:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --quiet --tries=1 --header='X-Tenant: system' --spider http://localhost:4000/api/health || exit 1"]
+#      interval: 15s
+#      timeout: 5s
+#      retries: 5
+#
+#  orchestrator-svc:
+#    <<: *service-defaults
+#    build:
+#      context: ../../ai-services/orchestrator-svc
+#      dockerfile: Dockerfile
+#      target: ${ORCHESTRATOR_BUILD_TARGET:-development}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-orchestrator
+#    working_dir: /app
+#    ports:
+#      - "8082:8080"
+#    volumes:
+#      - ../../ai-services/orchestrator-svc:/app
+#    environment:
+#      REDIS_URL: ${ORCHESTRATOR_REDIS_URL:-redis://redis:6379/1}
+#      KAFKA_BROKERS: ${KAFKA_BROKERS:-kafka:9092}
+#      BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://backend:4000/api}
+#      HUB_REGISTRY_URL: ${HUB_REGISTRY_URL:-http://backend:4000/api/hub/agents}
+#      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+#      S3_BUCKET: ${S3_BUCKET:-health-tourism-docs}
+#      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+#      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+#      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4318/v1/traces}
+#    command: >-
+#      sh -c "if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then uvicorn app.main:app --host 0.0.0.0 --port 8080; else uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload; fi"
+#    depends_on:
+#      backend:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#      qdrant:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/health')\""]
+#      interval: 20s
+#      timeout: 5s
+#      retries: 5
+#
+#  ai-nlp:
+#    <<: *service-defaults
+#    build:
+#      context: ../../ai-services/ai-nlp
+#      dockerfile: Dockerfile
+#      target: ${AI_NLP_BUILD_TARGET:-development}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-ai-nlp
+#    working_dir: /app
+#    ports:
+#      - "8200:8200"
+#    volumes:
+#      - ../../ai-services/ai-nlp:/app
+#    command: >-
+#      sh -c "if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then uvicorn app.main:app --host 0.0.0.0 --port 8200; else uvicorn app.main:app --host 0.0.0.0 --port 8200 --reload; fi"
+#    depends_on:
+#      qdrant:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8200/health')\""]
+#      interval: 20s
+#      timeout: 5s
+#      retries: 5
+#
+#  ai-speech:
+#    <<: *service-defaults
+#    build:
+#      context: ../../ai-services/ai-speech
+#      dockerfile: Dockerfile
+#      target: ${AI_SPEECH_BUILD_TARGET:-development}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-ai-speech
+#    working_dir: /app
+#    ports:
+#      - "8300:8300"
+#    volumes:
+#      - ../../ai-services/ai-speech:/app
+#    command: >-
+#      sh -c "if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then uvicorn app.main:app --host 0.0.0.0 --port 8300; else uvicorn app.main:app --host 0.0.0.0 --port 8300 --reload; fi"
+#    depends_on:
+#      qdrant:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8300/health')\""]
+#      interval: 20s
+#      timeout: 5s
+#      retries: 5
+#
+#  ai-vision:
+#    <<: *service-defaults
+#    build:
+#      context: ../../ai-services/ai-vision
+#      dockerfile: Dockerfile
+#      target: ${AI_VISION_BUILD_TARGET:-development}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-ai-vision
+#    working_dir: /app
+#    ports:
+#      - "8400:8400"
+#    volumes:
+#      - ../../ai-services/ai-vision:/app
+#    command: >-
+#      sh -c "if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then uvicorn app.main:app --host 0.0.0.0 --port 8400; else uvicorn app.main:app --host 0.0.0.0 --port 8400 --reload; fi"
+#    depends_on:
+#      qdrant:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8400/health')\""]
+#      interval: 20s
+#      timeout: 5s
+#      retries: 5
+#
+#  ai-personalization:
+#    <<: *service-defaults
+#    build:
+#      context: ../../ai-services/ai-personalization
+#      dockerfile: Dockerfile
+#      target: ${AI_PERSONALIZATION_BUILD_TARGET:-development}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-ai-personalization
+#    working_dir: /app
+#    ports:
+#      - "8500:8500"
+#    volumes:
+#      - ../../ai-services/ai-personalization:/app
+#    command: >-
+#      sh -c "if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then uvicorn app.main:app --host 0.0.0.0 --port 8500; else uvicorn app.main:app --host 0.0.0.0 --port 8500 --reload; fi"
+#    depends_on:
+#      qdrant:
+#        condition: service_healthy
+#      minio:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8500/health')\""]
+#      interval: 20s
+#      timeout: 5s
+#      retries: 5
+#
+#  frontend:
+#    <<: *service-defaults
+#    build:
+#      context: ../../frontend
+#      dockerfile: Dockerfile
+#      target: ${FRONTEND_BUILD_TARGET:-development}
+#      args:
+#        NODE_ENV: ${NODE_ENV:-local}
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-frontend
+#    working_dir: /workspace/frontend
+#    ports:
+#      - "3000:3000"
+#    volumes:
+#      - ../../frontend:/workspace/frontend
+#      - frontend_node_modules:/workspace/frontend/node_modules
+#    command: >-
+#      sh -c "if [ \"${NODE_ENV:-local}\" = \"prod\" ]; then npm run start; else npm run dev; fi"
+#    depends_on:
+#      backend:
+#        condition: service_healthy
+#      orchestrator-svc:
+#        condition: service_healthy
+#      redis-exporter:
+#        condition: service_healthy
+#      postgres-exporter:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000 || exit 1"]
+#      interval: 15s
+#      timeout: 5s
+#      retries: 5
+#
+#  prometheus:
+#    <<: *service-defaults
+#    image: prom/prometheus:v2.49.0
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-prometheus
+#    user: "0:0"
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ../../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#      - ../../monitoring/prometheus/rules:/etc/prometheus/rules:ro
+#      - prometheus_data:/prometheus
+#    command:
+#      - --config.file=/etc/prometheus/prometheus.yml
+#      - --storage.tsdb.path=/prometheus
+#      - --web.enable-lifecycle
+#    depends_on:
+#      backend:
+#        condition: service_healthy
+#      orchestrator-svc:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#  grafana:
+#    <<: *service-defaults
+#    image: grafana/grafana:10.4.2
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-grafana
+#    ports:
+#      - "3001:3001"
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - ../../monitoring/grafana:/etc/grafana/provisioning:ro
+#    environment:
+#      GF_SERVER_HTTP_PORT: 3001
+#    depends_on:
+#      prometheus:
+#        condition: service_healthy
+#      loki:
+#        condition: service_healthy
+#      tempo:
+#        condition: service_healthy
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3001/api/health || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#  loki:
+#    <<: *service-defaults
+#    image: grafana/loki:2.9.4
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-loki
+#    user: "0:0"
+#    ports:
+#      - "3100:3100"
+#    volumes:
+#      - ../../monitoring/loki.yaml:/etc/loki/local-config.yaml:ro
+#      - loki_data:/loki
+#    command: ["-config.file=/etc/loki/local-config.yaml"]
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3100/ready || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#  tempo:
+#    <<: *service-defaults
+#    image: grafana/tempo:2.4.1
+#    container_name: ${COMPOSE_PROJECT_NAME:-tourism}-${NODE_ENV:-local}-tempo
+#    ports:
+#      - "4318:4318"
+#    volumes:
+#      - ../../monitoring/tempo/tempo.yml:/etc/tempo/tempo.yaml:ro
+#      - tempo_data:/var/tempo
+#    command:
+#      - -config.file=/etc/tempo/tempo.yaml
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:4318/ready || exit 1"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+#
+#networks:
+#  tourism:
+#    driver: bridge
+#
+#volumes:
+#  pg_data:
+#  redis_data:
+#  qdrant_data:
+#  minio_data:
+#  backend_node_modules:
+#  frontend_node_modules:
+#  prometheus_data:
+#  grafana_data:
+#  loki_data:
+#  tempo_data:

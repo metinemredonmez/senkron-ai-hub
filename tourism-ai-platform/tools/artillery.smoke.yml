@@ -1,0 +1,18 @@
+config:
+  target: "{{ $env.BACKEND_URL | default 'http://localhost:4000' }}"
+  phases:
+    - duration: 60
+      arrivalRate: 2
+scenarios:
+  - name: Health smoke
+    flow:
+      - get:
+          url: "/api/health"
+          headers:
+            X-Tenant: "{{ $env.TENANT | default 'demo-tenant' }}"
+  - name: Cases list (unauthenticated)
+    flow:
+      - get:
+          url: "/api/cases"
+          headers:
+            X-Tenant: "{{ $env.TENANT | default 'demo-tenant' }}"

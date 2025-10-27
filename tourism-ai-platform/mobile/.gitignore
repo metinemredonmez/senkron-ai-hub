@@ -1,0 +1,15 @@
+# React Native / Expo
+.expo/
+.expo-shared/
+dist/
+
+# iOS
+ios/build/
+ios/Pods/
+
+# Android
+android/build/
+android/.gradle/
+
+# Node.js
+node_modules/

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo
+  namespace: monitoring
+  labels:
+    app: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec:
+      containers:
+        - name: tempo
+          image: grafana/tempo:2.4.1
+          args:
+            - -config.file=/etc/tempo/tempo.yaml
+          ports:
+            - containerPort: 4318
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4318
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 4318
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: tempo-config
+              mountPath: /etc/tempo
+            - name: tempo-storage
+              mountPath: /var/tempo
+      volumes:
+        - name: tempo-config
+          configMap:
+            name: tempo-config
+            items:
+              - key: tempo.yaml
+                path: tempo.yaml
+        - name: tempo-storage
+          emptyDir: {}

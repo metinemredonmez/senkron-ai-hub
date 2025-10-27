@@ -1,0 +1,1128 @@
+{
+  "routes": [
+    {
+      "module": "hub.controller.ts",
+      "controller": "hub",
+      "method": "GET",
+      "path": "agents",
+      "fullPath": "/hub/agents",
+      "guards": [],
+      "roles": [],
+      "summary": "List registered agents",
+      "requiresAuth": false,
+      "requiresTenant": true,
+      "apiTags": [
+        "Hub"
+      ]
+    },
+    {
+      "module": "hub.controller.ts",
+      "controller": "hub",
+      "method": "POST",
+      "path": "events/publish",
+      "fullPath": "/hub/events/publish",
+      "guards": [],
+      "roles": [],
+      "summary": "Alias for publish event endpoint used by orchestrator bridge",
+      "requiresAuth": false,
+      "requiresTenant": true,
+      "apiTags": [
+        "Hub"
+      ]
+    },
+    {
+      "module": "auth",
+      "controller": "auth",
+      "method": "POST",
+      "path": "login",
+      "fullPath": "/auth/login",
+      "guards": [
+        "JwtAuthGuard"
+      ],
+      "roles": [],
+      "summary": "Authenticate with email/password",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "auth"
+      ]
+    },
+    {
+      "module": "auth",
+      "controller": "auth",
+      "method": "POST",
+      "path": "refresh",
+      "fullPath": "/auth/refresh",
+      "guards": [
+        "JwtAuthGuard"
+      ],
+      "roles": [],
+      "summary": "Refresh access token using a valid refresh token",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "auth"
+      ]
+    },
+    {
+      "module": "auth",
+      "controller": "auth",
+      "method": "GET",
+      "path": "me",
+      "fullPath": "/auth/me",
+      "guards": [
+        "JwtAuthGuard",
+        "JwtAuthGuard"
+      ],
+      "roles": [],
+      "summary": "Return authenticated user profile along with tenant context",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "auth"
+      ]
+    },
+    {
+      "module": "bookings",
+      "controller": "bookings",
+      "method": "PATCH",
+      "path": ":id",
+      "fullPath": "/bookings/:id",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Update booking status",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "bookings"
+      ]
+    },
+    {
+      "module": "cases",
+      "controller": "cases",
+      "method": "GET",
+      "path": ":id",
+      "fullPath": "/cases/:id",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Retrieve a case by identifier",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "cases"
+      ]
+    },
+    {
+      "module": "cases",
+      "controller": "cases",
+      "method": "POST",
+      "path": ":caseId/approvals/:taskId",
+      "fullPath": "/cases/:caseId/approvals/:taskId",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Resolve an approval task for a case",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "cases"
+      ]
+    },
+    {
+      "module": "catalog",
+      "controller": "catalog",
+      "method": "PUT",
+      "path": ":id",
+      "fullPath": "/catalog/packages/:id",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [
+        "tenant-admin"
+      ],
+      "summary": "Update catalog package",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "catalog"
+      ]
+    },
+    {
+      "module": "docs-visa",
+      "controller": "docs-visa",
+      "method": "POST",
+      "path": "presign",
+      "fullPath": "/docs-visa/presign",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard",
+        "PoliciesGuard"
+      ],
+      "roles": [],
+      "summary": "Generate presigned upload URL for visa documents",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "docs-visa"
+      ]
+    },
+    {
+      "module": "docs-visa",
+      "controller": "docs-visa",
+      "method": "GET",
+      "path": "cases/:caseId",
+      "fullPath": "/docs-visa/cases/:caseId",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard",
+        "PoliciesGuard"
+      ],
+      "roles": [],
+      "summary": "List visa documents for a case",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "docs-visa"
+      ]
+    },
+    {
+      "module": "docs-visa",
+      "controller": "docs-visa",
+      "method": "PATCH",
+      "path": ":id/verify",
+      "fullPath": "/docs-visa/:id/verify",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard",
+        "PoliciesGuard"
+      ],
+      "roles": [],
+      "summary": "Mark a visa document as verified",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "docs-visa"
+      ]
+    },
+    {
+      "module": "external",
+      "controller": "only-channel",
+      "method": "GET",
+      "path": "token",
+      "fullPath": "/only-channel/token",
+      "guards": [],
+      "roles": [],
+      "summary": "Retrieve the OnlyChannel token for the current tenant",
+      "requiresAuth": false,
+      "requiresTenant": true,
+      "apiTags": [
+        "OnlyChannel"
+      ]
+    },
+    {
+      "module": "external",
+      "controller": "webhooks",
+      "method": "POST",
+      "path": "whatsapp",
+      "fullPath": "/webhooks/whatsapp",
+      "guards": [],
+      "roles": [],
+      "summary": "Handle WhatsApp inbound message webhook",
+      "requiresAuth": false,
+      "requiresTenant": true,
+      "apiTags": [
+        "webhooks"
+      ]
+    },
+    {
+      "module": "patients",
+      "controller": "patients",
+      "method": "GET",
+      "path": ":id",
+      "fullPath": "/patients/:id",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Retrieve a patient by identifier",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "patients"
+      ]
+    },
+    {
+      "module": "patients",
+      "controller": "patients",
+      "method": "PUT",
+      "path": ":id",
+      "fullPath": "/patients/:id",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Update an existing patient record",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "patients"
+      ]
+    },
+    {
+      "module": "pricing",
+      "controller": "pricing",
+      "method": "GET",
+      "path": "cases/:caseId",
+      "fullPath": "/pricing/cases/:caseId",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "List pricing quotes for a case",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "pricing"
+      ]
+    },
+    {
+      "module": "pricing",
+      "controller": "pricing",
+      "method": "POST",
+      "path": "quotes",
+      "fullPath": "/pricing/quotes",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Create a pricing quote for a case via AI orchestrator",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "pricing"
+      ]
+    },
+    {
+      "module": "providers",
+      "controller": "providers",
+      "method": "PUT",
+      "path": ":id",
+      "fullPath": "/providers/:id",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [
+        "tenant-admin"
+      ],
+      "summary": "Update provider details",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "providers"
+      ]
+    },
+    {
+      "module": "tenants",
+      "controller": "tenants",
+      "method": "GET",
+      "path": "current",
+      "fullPath": "/tenants/current",
+      "guards": [
+        "JwtAuthGuard",
+        "JwtAuthGuard"
+      ],
+      "roles": [],
+      "summary": "Retrieve the tenant resolved from the current request context",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "tenants"
+      ]
+    },
+    {
+      "module": "tenants",
+      "controller": "tenants",
+      "method": "POST",
+      "path": "register",
+      "fullPath": "/tenants/register",
+      "guards": [
+        "JwtAuthGuard",
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [
+        "platform-admin"
+      ],
+      "summary": "Register or update metadata for a tenant",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "tenants"
+      ]
+    },
+    {
+      "module": "travel",
+      "controller": "travel",
+      "method": "GET",
+      "path": "cases/:caseId",
+      "fullPath": "/travel/cases/:caseId",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Retrieve travel plan for a case",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "travel"
+      ]
+    },
+    {
+      "module": "travel",
+      "controller": "travel",
+      "method": "POST",
+      "path": "cases/:caseId/sync",
+      "fullPath": "/travel/cases/:caseId/sync",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Sync travel plan data from orchestrator",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "travel"
+      ]
+    },
+    {
+      "module": "travel",
+      "controller": "travel",
+      "method": "GET",
+      "path": "cases/:caseId/itinerary.ics",
+      "fullPath": "/travel/cases/:caseId/itinerary.ics",
+      "guards": [
+        "JwtAuthGuard",
+        "RolesGuard"
+      ],
+      "roles": [],
+      "summary": "Download travel itinerary iCalendar file",
+      "requiresAuth": true,
+      "requiresTenant": true,
+      "apiTags": [
+        "travel"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "route": {
+        "module": "hub.controller.ts",
+        "controller": "hub",
+        "method": "GET",
+        "path": "agents",
+        "fullPath": "/hub/agents",
+        "guards": [],
+        "roles": [],
+        "summary": "List registered agents",
+        "requiresAuth": false,
+        "requiresTenant": true,
+        "apiTags": [
+          "Hub"
+        ]
+      },
+      "status": 0,
+      "responseTime": 10,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "hub.controller.ts",
+        "controller": "hub",
+        "method": "POST",
+        "path": "events/publish",
+        "fullPath": "/hub/events/publish",
+        "guards": [],
+        "roles": [],
+        "summary": "Alias for publish event endpoint used by orchestrator bridge",
+        "requiresAuth": false,
+        "requiresTenant": true,
+        "apiTags": [
+          "Hub"
+        ]
+      },
+      "status": 0,
+      "responseTime": 2,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "auth",
+        "controller": "auth",
+        "method": "POST",
+        "path": "login",
+        "fullPath": "/auth/login",
+        "guards": [
+          "JwtAuthGuard"
+        ],
+        "roles": [],
+        "summary": "Authenticate with email/password",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "auth"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "auth",
+        "controller": "auth",
+        "method": "POST",
+        "path": "refresh",
+        "fullPath": "/auth/refresh",
+        "guards": [
+          "JwtAuthGuard"
+        ],
+        "roles": [],
+        "summary": "Refresh access token using a valid refresh token",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "auth"
+        ]
+      },
+      "status": 0,
+      "responseTime": 2,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "auth",
+        "controller": "auth",
+        "method": "GET",
+        "path": "me",
+        "fullPath": "/auth/me",
+        "guards": [
+          "JwtAuthGuard",
+          "JwtAuthGuard"
+        ],
+        "roles": [],
+        "summary": "Return authenticated user profile along with tenant context",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "auth"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "bookings",
+        "controller": "bookings",
+        "method": "PATCH",
+        "path": ":id",
+        "fullPath": "/bookings/:id",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Update booking status",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "bookings"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "cases",
+        "controller": "cases",
+        "method": "GET",
+        "path": ":id",
+        "fullPath": "/cases/:id",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Retrieve a case by identifier",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "cases"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "cases",
+        "controller": "cases",
+        "method": "POST",
+        "path": ":caseId/approvals/:taskId",
+        "fullPath": "/cases/:caseId/approvals/:taskId",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Resolve an approval task for a case",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "cases"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "catalog",
+        "controller": "catalog",
+        "method": "PUT",
+        "path": ":id",
+        "fullPath": "/catalog/packages/:id",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [
+          "tenant-admin"
+        ],
+        "summary": "Update catalog package",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "catalog"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "docs-visa",
+        "controller": "docs-visa",
+        "method": "POST",
+        "path": "presign",
+        "fullPath": "/docs-visa/presign",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard",
+          "PoliciesGuard"
+        ],
+        "roles": [],
+        "summary": "Generate presigned upload URL for visa documents",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "docs-visa"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "docs-visa",
+        "controller": "docs-visa",
+        "method": "GET",
+        "path": "cases/:caseId",
+        "fullPath": "/docs-visa/cases/:caseId",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard",
+          "PoliciesGuard"
+        ],
+        "roles": [],
+        "summary": "List visa documents for a case",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "docs-visa"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "docs-visa",
+        "controller": "docs-visa",
+        "method": "PATCH",
+        "path": ":id/verify",
+        "fullPath": "/docs-visa/:id/verify",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard",
+          "PoliciesGuard"
+        ],
+        "roles": [],
+        "summary": "Mark a visa document as verified",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "docs-visa"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "external",
+        "controller": "only-channel",
+        "method": "GET",
+        "path": "token",
+        "fullPath": "/only-channel/token",
+        "guards": [],
+        "roles": [],
+        "summary": "Retrieve the OnlyChannel token for the current tenant",
+        "requiresAuth": false,
+        "requiresTenant": true,
+        "apiTags": [
+          "OnlyChannel"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "external",
+        "controller": "webhooks",
+        "method": "POST",
+        "path": "whatsapp",
+        "fullPath": "/webhooks/whatsapp",
+        "guards": [],
+        "roles": [],
+        "summary": "Handle WhatsApp inbound message webhook",
+        "requiresAuth": false,
+        "requiresTenant": true,
+        "apiTags": [
+          "webhooks"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "patients",
+        "controller": "patients",
+        "method": "GET",
+        "path": ":id",
+        "fullPath": "/patients/:id",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Retrieve a patient by identifier",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "patients"
+        ]
+      },
+      "status": 0,
+      "responseTime": 0,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "patients",
+        "controller": "patients",
+        "method": "PUT",
+        "path": ":id",
+        "fullPath": "/patients/:id",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Update an existing patient record",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "patients"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "pricing",
+        "controller": "pricing",
+        "method": "GET",
+        "path": "cases/:caseId",
+        "fullPath": "/pricing/cases/:caseId",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "List pricing quotes for a case",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "pricing"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "pricing",
+        "controller": "pricing",
+        "method": "POST",
+        "path": "quotes",
+        "fullPath": "/pricing/quotes",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Create a pricing quote for a case via AI orchestrator",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "pricing"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "providers",
+        "controller": "providers",
+        "method": "PUT",
+        "path": ":id",
+        "fullPath": "/providers/:id",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [
+          "tenant-admin"
+        ],
+        "summary": "Update provider details",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "providers"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "tenants",
+        "controller": "tenants",
+        "method": "GET",
+        "path": "current",
+        "fullPath": "/tenants/current",
+        "guards": [
+          "JwtAuthGuard",
+          "JwtAuthGuard"
+        ],
+        "roles": [],
+        "summary": "Retrieve the tenant resolved from the current request context",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "tenants"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "tenants",
+        "controller": "tenants",
+        "method": "POST",
+        "path": "register",
+        "fullPath": "/tenants/register",
+        "guards": [
+          "JwtAuthGuard",
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [
+          "platform-admin"
+        ],
+        "summary": "Register or update metadata for a tenant",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "tenants"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "travel",
+        "controller": "travel",
+        "method": "GET",
+        "path": "cases/:caseId",
+        "fullPath": "/travel/cases/:caseId",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Retrieve travel plan for a case",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "travel"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "travel",
+        "controller": "travel",
+        "method": "POST",
+        "path": "cases/:caseId/sync",
+        "fullPath": "/travel/cases/:caseId/sync",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Sync travel plan data from orchestrator",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "travel"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    },
+    {
+      "route": {
+        "module": "travel",
+        "controller": "travel",
+        "method": "GET",
+        "path": "cases/:caseId/itinerary.ics",
+        "fullPath": "/travel/cases/:caseId/itinerary.ics",
+        "guards": [
+          "JwtAuthGuard",
+          "RolesGuard"
+        ],
+        "roles": [],
+        "summary": "Download travel itinerary iCalendar file",
+        "requiresAuth": true,
+        "requiresTenant": true,
+        "apiTags": [
+          "travel"
+        ]
+      },
+      "status": 0,
+      "responseTime": 1,
+      "success": false,
+      "error": "Connection refused - server not running"
+    }
+  ],
+  "moduleStats": [
+    {
+      "module": "hub.controller.ts",
+      "totalEndpoints": 2,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 2,
+      "coverage": 0
+    },
+    {
+      "module": "auth",
+      "totalEndpoints": 3,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 3,
+      "coverage": 0
+    },
+    {
+      "module": "bookings",
+      "totalEndpoints": 1,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 1,
+      "coverage": 0
+    },
+    {
+      "module": "cases",
+      "totalEndpoints": 2,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 2,
+      "coverage": 0
+    },
+    {
+      "module": "catalog",
+      "totalEndpoints": 1,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 1,
+      "coverage": 0
+    },
+    {
+      "module": "docs-visa",
+      "totalEndpoints": 3,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 3,
+      "coverage": 0
+    },
+    {
+      "module": "external",
+      "totalEndpoints": 2,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 2,
+      "coverage": 0
+    },
+    {
+      "module": "patients",
+      "totalEndpoints": 2,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 2,
+      "coverage": 0
+    },
+    {
+      "module": "pricing",
+      "totalEndpoints": 2,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 2,
+      "coverage": 0
+    },
+    {
+      "module": "providers",
+      "totalEndpoints": 1,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 1,
+      "coverage": 0
+    },
+    {
+      "module": "tenants",
+      "totalEndpoints": 2,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 2,
+      "coverage": 0
+    },
+    {
+      "module": "travel",
+      "totalEndpoints": 3,
+      "tested": 0,
+      "passed": 0,
+      "unauthorized": 0,
+      "notFound": 0,
+      "errors": 3,
+      "coverage": 0
+    }
+  ]
+}

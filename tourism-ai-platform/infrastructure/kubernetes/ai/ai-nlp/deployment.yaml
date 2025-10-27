@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-nlp
+  namespace: ai
+  labels:
+    app: ai-nlp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-nlp
+  template:
+    metadata:
+      labels:
+        app: ai-nlp
+    spec:
+      containers:
+        - name: ai-nlp
+          image: ghcr.io/health-tourism/ai-nlp:v2.0.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: ai-nlp-config
+            - secretRef:
+                name: ai-nlp-secrets
+          ports:
+            - containerPort: 8200
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8200
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 400m
+              memory: 512Mi

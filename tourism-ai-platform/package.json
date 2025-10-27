@@ -1,0 +1,45 @@
+{
+  "name": "health-tourism-ai-platform",
+  "version": "3.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "mobile",
+    "shared",
+    "tools",
+    "ai-services"
+  ],
+  "scripts": {
+    "dev": "cross-env NODE_ENV=local concurrently \"yarn dev:backend\" \"yarn dev:frontend\" \"yarn dev:ai\"",
+    "dev:backend": "cd backend && cross-env NODE_ENV=local yarn start:dev",
+    "dev:frontend": "cd frontend && cross-env NODE_ENV=local yarn dev",
+    "dev:ai": "cd ai-services/orchestrator-svc && cross-env NODE_ENV=local uvicorn app.main:app --reload",
+    "build": "lerna run build",
+    "lint": "lerna run lint",
+    "test": "lerna run test",
+    "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down",
+    "setup": "bash ./scripts/setup.sh",
+    "check:health": "bash ./tools/check-health.sh",
+    "smoke:backend": "yarn workspace @tourism/backend test:smoke",
+    "smoke:artillery": "bash -lc 'if command -v artillery >/dev/null; then artillery run tools/artillery.smoke.yml; else echo \"artillery is not installed. Install it with \\\"npm i -g artillery\\\" to run this check.\" >&2; exit 1; fi'"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.57.0",
+    "husky": "^9.0.11",
+    "lerna": "^8.0.2",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

@@ -1,0 +1,22 @@
+server:
+  http_listen_port: 4318
+
+search_enabled: true
+search_attributes:
+  - tenant_id
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+        grpc:
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
+    wal:
+      path: /tmp/tempo/wal

@@ -1,0 +1,19 @@
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Dependencies
+node_modules/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing artifacts
+coverage/
+test-results/
+
+# OS-specific
+.DS_Store

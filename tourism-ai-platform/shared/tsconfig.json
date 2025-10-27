@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    /* === Output & Module Settings === */
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+
+    /* === Type Safety === */
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "noUncheckedIndexedAccess": true,
+
+    /* === Path Mapping (Monorepo) === */
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./*"]
+    },
+
+    /* === Source Maps === */
+    "sourceMap": true,
+    "inlineSources": true
+  },
+  "include": [
+    "constants/**/*",
+    "types/**/*",
+    "utils/**/*",
+    "index.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
+}

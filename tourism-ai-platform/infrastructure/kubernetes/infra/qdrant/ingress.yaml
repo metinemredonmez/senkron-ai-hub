@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qdrant
+  namespace: infra
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: qdrant.health-tourism.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: qdrant
+                port:
+                  number: 6333

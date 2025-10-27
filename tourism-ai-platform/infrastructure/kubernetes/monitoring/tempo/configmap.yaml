@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: monitoring
+data:
+  tempo.yaml: |-
+    server:
+      http_listen_port: 4318
+    search_enabled: true
+    search_attributes:
+      - tenant_id
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            http:
+            grpc:
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo

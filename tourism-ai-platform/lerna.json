@@ -1,0 +1,16 @@
+{
+  "version": "independent",
+  "npmClient": "npm",
+  "useNx": false,
+  "packages": [
+    "backend",
+    "frontend",
+    "mobile",
+    "shared"
+  ],
+  "command": {
+    "version": {
+      "conventionalCommits": true
+    }
+  }
+}

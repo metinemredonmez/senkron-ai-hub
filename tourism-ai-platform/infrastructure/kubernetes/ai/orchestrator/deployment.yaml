@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator-svc
+  namespace: ai
+  labels:
+    app: orchestrator-svc
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: orchestrator-svc
+  template:
+    metadata:
+      labels:
+        app: orchestrator-svc
+    spec:
+      containers:
+        - name: orchestrator-svc
+          image: ghcr.io/health-tourism/orchestrator-svc:v2.0.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: orchestrator-config
+            - secretRef:
+                name: orchestrator-secrets
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 400m
+              memory: 512Mi

@@ -1,0 +1,89 @@
+name: Tenant Validation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  tenant-smoke:
+    runs-on: ubuntu-latest
+    env:
+      TEST_TENANT_ID: chat365
+      API_BASE_URL: http://localhost:4000/api
+      REDIS_URL: redis://localhost:6379
+      KAFKA_BROKERS: localhost:9092
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'yarn'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Node.js dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Python dependencies
+        run: pip install -r ai-services/requirements.txt
+
+      - name: Start Infra
+        run: docker compose -f infrastructure/docker/docker-compose.yml up -d postgres redis kafka tempo prometheus grafana
+
+      - name: Run Backend
+        run: |
+          yarn workspace @tourism/backend start:dev &
+          echo $! > backend.pid
+
+      - name: Run Orchestrator
+        run: |
+          uvicorn app.main:app --app-dir ai-services/orchestrator-svc --port 8082 --host 0.0.0.0 &
+          echo $! > orchestrator.pid
+
+      - name: Wait for Health
+        run: |
+          for attempt in {1..30}; do
+            if curl -sf http://localhost:4000/api/health > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Run Tenant Tests
+        run: yarn workspace @tourism/backend test --testPathPattern=tenant-smoke.spec.ts
+
+      - name: Collect Metrics
+        run: |
+          mkdir -p monitoring
+          curl -s http://localhost:4000/api/hub/metrics > monitoring/tenant_metrics.log
+
+      - name: Upload Swagger
+        run: |
+          mkdir -p artifacts
+          cp backend/docs/swagger.json artifacts/
+          cp backend/docs/swagger.yaml artifacts/
+
+      - name: Upload tenant validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-validation
+          path: |
+            monitoring/tenant_metrics.log
+            backend/docs/swagger.json
+            backend/docs/swagger.yaml
+
+      - name: Shutdown services
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then kill $(cat backend.pid) || true; fi
+          if [ -f orchestrator.pid ]; then kill $(cat orchestrator.pid) || true; fi
+          docker compose down

@@ -1,0 +1,64 @@
+{
+  "title": "AI Orchestrator Overview",
+  "uid": "ai-orchestrator-overview",
+  "version": 1,
+  "schemaVersion": 38,
+  "description": "AI orchestrator metrics with tenant filtering.",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "tenant_id",
+        "type": "query",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "sort": 1,
+        "definition": "label_values(hub_agent_latency_seconds, tenant_id)",
+        "query": "label_values(hub_agent_latency_seconds, tenant_id)",
+        "regex": "",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PROMETHEUS_DS"
+        },
+        "current": {
+          "text": "All",
+          "value": ".*",
+          "selected": false
+        },
+        "hide": 0,
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Median Agent Latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PROMETHEUS_DS"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le, tenant_id) (rate(hub_agent_latency_seconds_bucket{tenant_id=~\"$tenant_id\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+    }
+  ]
+}

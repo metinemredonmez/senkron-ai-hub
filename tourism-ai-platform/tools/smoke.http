@@ -1,0 +1,50 @@
+@baseUrl = {{BASE_URL}}
+@tenant = {{TENANT}}
+@email = {{EMAIL}}
+@password = {{PASSWORD}}
+@token = {{TOKEN}}
+
+### Smoke: Health check
+GET {{baseUrl}}/api/health
+X-Tenant: {{tenant}}
+Accept: application/json
+
+### Smoke: Public Swagger definition
+GET {{baseUrl}}/api/docs-json
+Accept: application/json
+
+### Smoke: Attempt login (provide EMAIL/PASSWORD to enable)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+X-Tenant: {{tenant}}
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### Smoke: Cases should be unauthorized without token
+GET {{baseUrl}}/api/cases
+X-Tenant: {{tenant}}
+Accept: application/json
+
+### Smoke: Cases with authorization (set TOKEN first)
+GET {{baseUrl}}/api/cases
+X-Tenant: {{tenant}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Smoke: Case approval resolution (requires tenant + token)
+# Tip: set CASE_ID/TASK_ID to real identifiers before running
+@caseId = {{CASE_ID}}
+@taskId = {{TASK_ID}}
+
+POST {{baseUrl}}/api/cases/{{caseId}}/approvals/{{taskId}}
+X-Tenant: {{tenant}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "decision": "approved",
+  "comment": "Smoke test approval"
+}

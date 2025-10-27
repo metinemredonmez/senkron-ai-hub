@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "backend"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:4000"]
+  - job_name: "backend-hub"
+    metrics_path: /hub/metrics
+    static_configs:
+      - targets: ["backend:4000"]
+  - job_name: "orchestrator"
+    static_configs:
+      - targets: ["orchestrator-svc:8080"]
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+  - job_name: "qdrant"
+    static_configs:
+      - targets: ["qdrant:6333"]
+
+rule_files:
+  - "rules/alerts.yml"
+  - "rules/recording_rules.yml"
